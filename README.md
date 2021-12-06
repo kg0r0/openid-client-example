@@ -12,5 +12,4 @@ const oidc = new ExpressOIDC({
 ```
 
 # references
-https://developer.okta.com/quickstart/#/okta-sign-in-page/nodejs/express  
-https://www.npmjs.com/package/@okta/oidc-middleware
+- https://github.com/auth0/express-openid-connect

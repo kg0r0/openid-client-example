@@ -1,44 +1,29 @@
 const express = require('express');
-const session = require('express-session');
-const { ExpressOIDC } = require('@okta/oidc-middleware');
- 
+const { auth } = require('express-openid-connect');
+
 const app = express();
-const oidc = new ExpressOIDC({
-  issuer: 'https://{yourOktaDomain}/oauth2/default',
-  client_id: '{clientId}',
-  client_secret: '{clientSecret}',
-  appBaseUrl: 'http://localhost:3000',
-  scope: 'openid profile'
-});
- 
-app.use(session({
-  secret: 'this-should-be-very-random',
-  resave: true,
-  saveUninitialized: false
-}));
-app.use(oidc.router);
- 
+
+const { PORT = 3000 } = process.env;
+
+app.use(
+  auth({
+    authorizationParams: {
+      response_type: 'code',
+      scope: 'openid profile email',
+    },
+    issuerBaseURL: 'https://demo.identityserver.io',
+    baseURL: 'http://localhost:3000',
+    clientID: 'interactive.confidential',
+    clientSecret: 'secret',
+    secret: 'LONG_RANDOM_VALUE',
+    idpLogout: true,
+  })
+);
+
 app.get('/', (req, res) => {
-  if (req.userContext) {
-    res.send(`
-      Hello ${req.userContext.userinfo.name}!
-      <form method="POST" action="/logout">
-        <button type="submit">Logout</button>
-      </form>
-    `);
-  } else {
-    res.send('Please <a href="/login">login</a>');
-  }
-});
- 
-app.get('/protected', oidc.ensureAuthenticated(), (req, res) => {
-  res.send('Top Secret');
-});
- 
-oidc.on('ready', () => {
-  app.listen(3000, () => console.log('app started'));
-});
- 
-oidc.on('error', err => {
-  // An error occurred while setting up OIDC, during token revokation, or during post-logout handling
+  res.send(`hello ${req.oidc.user.sub}`);
+}); 
+
+app.listen(PORT, () => {
+  console.log(`Example app started at http://localhost:${PORT}`);
 });
